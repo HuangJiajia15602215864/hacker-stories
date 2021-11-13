@@ -2,6 +2,7 @@ import React from "react";
 import axios from 'axios';
 import styled from 'styled-components';
 import styles from './App.module.css';
+import { ReactComponent as Check } from './logo.svg';
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -263,7 +264,7 @@ const Item = ({ item, onRemoveItem }) => (
       <StyledButtonSmall
         type="button"
         onClick={() => onRemoveItem(item)}>
-        删除
+        删除<Check height="20px" width="20px" />
       </StyledButtonSmall>
     </StyledColumn>
   </StyledItem>

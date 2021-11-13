@@ -1,4 +1,5 @@
 import React from "react";
+import axios from 'axios';
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -32,36 +33,13 @@ const storiesReducer = (state, action) => {
       throw new Error();
   }
 };
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 function App() {
-  const getAsyncStories = () =>
-    new Promise(resolve =>
-      setTimeout(
-        () => resolve({ data: { stories: initialStories } }),
-        2000
-      )
-    );
-  const initialStories = [
-    {
-      title: "React",
-      url: "https://reactjs.org/",
-      author: "Jordan Walke",
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-    },
-    {
-      title: "Redux",
-      url: "https://redux.js.org/",
-      author: "Dan Abramov, Andrew Clark",
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-    },
-  ];
   const [searchTerm, setSearchTerm] = React.useState(
-    localStorage.getItem("search") || ""
+    localStorage.getItem("search") || "react"
   );
+  const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
   const [stories, dispatchStories] = React.useReducer(storiesReducer, { data: [], isLoading: false, isError: false });
   const [isLoading, setIsLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
@@ -69,23 +47,33 @@ function App() {
   React.useEffect(() => {
     localStorage.setItem("search", searchTerm);
   }, [searchTerm]);
-  React.useEffect(() => {
+
+  const handleFetchStories = React.useCallback(() => {
+    if (!searchTerm) return;
     dispatchStories({ type: 'STORIES_FETCH_INIT' });
-    getAsyncStories().then(result => {
-      dispatchStories({
-        type: 'STORIES_FETCH_SUCCESS',
-        payload: result.data.stories,
-      });
-      setIsLoading(false);
-    }).catch(() => dispatchStories({ type: 'STORIES_FETCH_FAILURE' }));
-  }, []);
+    axios
+      .get(url)
+      .then(result => {
+        dispatchStories({
+          type: 'STORIES_FETCH_SUCCESS',
+          payload: result.data.hits,
+        });
+      })
+      .catch(() =>
+        dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
+      );
+  }, [url]); // 每当其依赖数组[url]改变时这个 Hook 就会创建一个 memoized 函数(即重新定义handleFetchStories函数),useEffect Hook 依赖于新的函数所以它会再次运行
+
+  React.useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
-  const searchedStories = stories.data.filter(function (story) {
-    return story.title.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
+  };
   const handleRemoveStory = (item) => {
     dispatchStories({
       type: 'REMOVE_STORY',
@@ -102,6 +90,13 @@ function App() {
       >
         Search
       </InputWithLabel>
+      <button
+        type="button"
+        disabled={!searchTerm}
+        onClick={handleSearchSubmit}
+      >
+        Submit
+      </button>
 
       {stories.isError && <p>Something went wrong ...</p>}
 
@@ -109,7 +104,7 @@ function App() {
         <p>Loading ...</p>
       ) : (
         <List
-          list={searchedStories}
+          list={stories.data}
           onRemoveItem={handleRemoveStory}
         />
       )}
@@ -142,8 +137,8 @@ const Item = ({ item, onRemoveItem }) => (
       <a href={item.url}>{item.title}</a>
     </span>
     <span>{item.author}</span>
-    <span>{item.num_comments}</span>
-    <span>{item.points}</span>
+    <span> {item.num_comments}</span>
+    <span> {item.points}</span>
     <span>
       <button type="button" onClick={onRemoveItem.bind(null, item)}>
         Dismiss

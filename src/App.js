@@ -122,19 +122,59 @@ const SearchForm = ({
   </form>
 );
 
-const InputWithLabel = ({
-  id,
-  value,
-  type = "text",
-  onInputChange,
-  children,
-}) => (
-  <>
-    <label htmlFor={id}>{children}</label>
-    &nbsp;
-    <input id={id} type={type} value={value} onChange={onInputChange} />
-  </>
-);
+// const InputWithLabel = ({
+//   id,
+//   value,
+//   type = "text",
+//   onInputChange,
+//   isFocused,
+//   children,
+// }) => {
+//   const inputRef = React.useRef();
+//   React.useEffect(() => {
+//     if (isFocused && inputRef.current) {
+//       inputRef.current.focus();
+//     }
+//   }, [isFocused]);
+
+//   return (
+//     <>
+//       <label htmlFor={id}>{children}</label>
+//       &nbsp;
+//       <input ref={inputRef} id={id} type={type} value={value} onChange={onInputChange} />
+//     </>
+//   );
+// };
+
+class InputWithLabel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.inputRef = React.createRef();
+  }
+  componentDidMount() {
+    if (this.props.isFocused) {
+      this.inputRef.current.focus();
+    }
+  }
+  render() {
+    const {
+      id,
+      value,
+      type = 'text',
+      onInputChange,
+      children,
+    } = this.props;
+    return (<><label htmlFor={id}>{children}</label> &nbsp;
+      <input
+        ref={this.inputRef}
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+      /> </>
+    );
+  }
+}
 
 const List = ({ list, onRemoveItem }) =>
   list.map((item) => (

@@ -2,6 +2,7 @@ import React from "react";
 import axios from 'axios';
 
 import styles from './App.module.css';
+import { ReactComponent as Check } from './logo.svg';
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -199,7 +200,7 @@ const Item = ({ item, onRemoveItem }) => (
         onClick={() => onRemoveItem(item)}
         className={`${styles.button} ${styles.buttonSmall}`}
       >
-        Dismiss
+        <Check height="20px" width="20px" />
       </button>
     </span>
   </div>
